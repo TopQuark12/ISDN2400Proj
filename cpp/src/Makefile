@@ -1,7 +1,7 @@
 # Makefile
 # Author		Wong Tat Hang (Alex)    thwongaz@connect.ust.hk
-# date        28/4/2019
-# copyright   Copyright (c) 2019
+# date        	28/4/2019
+# copyright   	Copyright (c) 2019
 
 IDIR =../include
 CC=g++
