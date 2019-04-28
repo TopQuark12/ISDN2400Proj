@@ -17,10 +17,15 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
+// #include <limits.h>
 
 using namespace std;
 
 int pressureGen() {
+
+    int pressureRes;
+    cout << "Enter the pressure resolution of modifier meshes: ";
+    cin >> pressureRes;
 
     ifstream presMap;
     presMap.open("input/pressureMap.pres", ios::in);
@@ -30,7 +35,7 @@ int pressureGen() {
         cout << "Pressure map not found! \n";
         return 1;
     }
-    vector<vector<int>> map;
+    vector<vector<float>> map;
     vector<int> lineLength;
     string line;
     int numLine = 0;
@@ -84,7 +89,35 @@ int pressureGen() {
     scad << "pressureMapNumCol = " << numLine << ";\n";
     scad.close();
 
-    cout << "Pressure parsing sucessful";
+    cout << "Pressure parsing sucessful\n";
+
+    //vector<float> pressureThresh;
+    float minPressure = numeric_limits<float>::max();
+    float maxPressure = numeric_limits<float>::min();
+    for (auto i = map.begin(); i != map.end(); i++) {
+        for (auto j = i->begin(); j != i->end(); j++) {
+            minPressure = *j < minPressure ? *j : minPressure;
+            maxPressure = *j > maxPressure ? *j : maxPressure;
+        }
+    }    
+    #ifdef DEBUG_BUILD
+    cout << "Min: " << minPressure << '\n';
+    cout << "Max: " << maxPressure << '\n';
+    #endif
+    float pressureInc = (maxPressure - minPressure) / pressureRes;
+    for (int i = 0; i < pressureRes; i++) {
+        float lower = minPressure + i * pressureInc;
+        float higher = minPressure + (i + 1) * pressureInc;
+        ostringstream cmdString;
+        cmdString << "openscad -D loThrs=" << lower << " -D hiThrs=" << higher
+                  << " -o output/" << i << ".stl scad/modMeshGen.scad\n";
+        int exitCode = system(cmdString.str().c_str());
+        #ifdef DEBUG_BUILD
+        cout << cmdString.str();
+        #endif
+    }
+
+    cout << "Modifier Mesh Generation Successful\n";
 
     return 0;
 }
