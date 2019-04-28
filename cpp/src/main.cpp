@@ -17,7 +17,5 @@ using namespace std;
 int main()
 {
     pressureGen();
-    int result = system("slic3r ./input/test.stl -o ./output/mesh1.gcode --no-gui");
-    cout << result;
     return 0;
 }
