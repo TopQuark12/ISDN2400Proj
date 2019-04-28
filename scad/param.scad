@@ -2,5 +2,5 @@
 // using user input
 
 padLength = 300;
-padWidth = 350;
-padHeight = 200;
+padWidth = 300;
+padHeight = 250;
