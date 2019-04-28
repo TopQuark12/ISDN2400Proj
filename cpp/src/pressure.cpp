@@ -84,5 +84,7 @@ int pressureGen() {
     scad << "pressureMapNumCol = " << numLine << ";\n";
     scad.close();
 
+    cout << "Pressure parsing sucessful";
+
     return 0;
 }
