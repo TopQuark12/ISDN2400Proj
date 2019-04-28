@@ -23,7 +23,7 @@ $(ODIR)/%.o: %.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 run: $(OBJ)
-	$(CC) -o ../$@ $^ $(CFLAGS) $(LIBS)
+	$(CC) -o ../../$@ $^ $(CFLAGS) $(LIBS)
 
 .PHONY: clean
 
