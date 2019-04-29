@@ -17,7 +17,6 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
-// #include <limits.h>
 
 using namespace std;
 
@@ -26,6 +25,10 @@ int pressureGen() {
     int pressureRes;
     cout << "Enter the pressure resolution of modifier meshes: ";
     cin >> pressureRes;
+
+    int infillLo = 10;
+    int infillHi = 50;
+    int infillInc = (infillHi - infillLo) / pressureRes;
 
     ifstream presMap;
     presMap.open("input/pressureMap.pres", ios::in);
@@ -100,17 +103,19 @@ int pressureGen() {
             maxPressure = *j > maxPressure ? *j : maxPressure;
         }
     }    
+    
     #ifdef DEBUG_BUILD
-    cout << "Min: " << minPressure << '\n';
-    cout << "Max: " << maxPressure << '\n';
+    cout << "Min Pressure: " << minPressure << '\n';
+    cout << "Max Pressure: " << maxPressure << '\n';
     #endif
+    
     float pressureInc = (maxPressure - minPressure) / pressureRes;
     for (int i = 0; i < pressureRes; i++) {
         float lower = minPressure + i * pressureInc;
         float higher = minPressure + (i + 1) * pressureInc;
         ostringstream cmdString;
         cmdString << "openscad -D loThrs=" << lower << " -D hiThrs=" << higher
-                  << " -o output/" << i << ".stl scad/modMeshGen.scad\n";
+                  << " -o output/infill_" << infillLo + i * infillInc << ".stl scad/modMeshGen.scad\n";
         int exitCode = system(cmdString.str().c_str());
         #ifdef DEBUG_BUILD
         cout << cmdString.str();
