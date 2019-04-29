@@ -3,4 +3,4 @@
 
 padLength = 300;
 padWidth = 300;
-padHeight = 250;
+padHeight = 100;
