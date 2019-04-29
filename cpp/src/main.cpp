@@ -39,5 +39,7 @@ int main()
     int pressureGenErrorCode = pressureGen();
     if(pressureGenErrorCode)
         return pressureGenErrorCode;
+
+    system("openscad -o output/main.stl scad/mainBody.scad");
     return 0;
 }
