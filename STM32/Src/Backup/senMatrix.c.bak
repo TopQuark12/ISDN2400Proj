@@ -145,8 +145,6 @@ void matInit(void)
 
     matReset();
 
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_Start(&hadc3);
 }
 
 void matReset(void)
@@ -170,7 +168,7 @@ void matReset(void)
     }
 }
 
-uint32_t matSampleSingle(uint8_t row, uint8_t col) 
+uint16_t matSampleSingle(uint8_t row, uint8_t col) 
 {
     HAL_GPIO_WritePin(sensorMat.colLine[col].port, sensorMat.colLine[col].pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(sensorMat.rowLine[row].port, sensorMat.rowLine[row].pin, GPIO_PIN_SET);
@@ -180,10 +178,22 @@ uint32_t matSampleSingle(uint8_t row, uint8_t col)
     adcConfig.Rank = 1;
     adcConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
     HAL_ADC_ConfigChannel(sensorMat.senLine[col].adc, &adcConfig);
+    HAL_ADC_Start(sensorMat.senLine[col].adc);
     HAL_ADC_PollForConversion(sensorMat.senLine[col].adc, HAL_MAX_DELAY);
 
     HAL_GPIO_WritePin(sensorMat.colLine[col].port, sensorMat.colLine[col].pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(sensorMat.rowLine[row].port, sensorMat.rowLine[row].pin, GPIO_PIN_RESET);
 
-    return HAL_ADC_GetValue(sensorMat.senLine[col].adc);
+    return (uint16_t) HAL_ADC_GetValue(sensorMat.senLine[col].adc);
+}
+
+void matSampleAll(uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL]) 
+{
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++) 
+    {
+        for (uint8_t j = 0; j < SEN_MATRIX_COL; j++)
+        {
+            samples[i][j] = matSampleSingle(i, j);
+        }
+    }
 }

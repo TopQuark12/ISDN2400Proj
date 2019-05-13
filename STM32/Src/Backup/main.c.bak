@@ -78,7 +78,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint32_t sample;
+uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL];
 /* USER CODE END 0 */
 
 /**
@@ -123,7 +123,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    sample = matSampleSingle(0, 0);
+    matSampleAll(samples);
   }
   /* USER CODE END 3 */
 }

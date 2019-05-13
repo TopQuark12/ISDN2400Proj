@@ -42,11 +42,13 @@
 #include "main.h"
 #include "adc.h"
 #include "usart.h"
+#include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "senMatrix.h"
+#include "usbd_cdc_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -78,7 +80,12 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+//2D array to store whole sensor mat reading
 uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL];
+//byte array as buffer to store data to be sent through USB CDC (serial)
+uint8_t matDataChar[2048];
+//counter for numbers of byte to be sent through USB CDC (serial)
+uint32_t matDataLen;
 /* USER CODE END 0 */
 
 /**
@@ -112,6 +119,7 @@ int main(void)
   MX_USART3_UART_Init();
   MX_ADC1_Init();
   MX_ADC3_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
   matInit();
   /* USER CODE END 2 */
@@ -123,8 +131,40 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    //some delay so as not to kill the computer with high data rate
+    HAL_Delay(1000);
+    //sample all the elements in the sensor mat, store data in a 2d array
     matSampleAll(samples);
+    //reset transmit data buffer and char count
+    matDataLen = 0;
+    memset(matDataChar, 0, sizeof(matDataChar));
+    //write sensor data into transmit data buffer
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++) 
+    {
+      for (uint8_t j = 0; j < SEN_MATRIX_COL; j++)
+      {
+        //serial stream requires byte array, splitting 16-bit adc reading into 2 8-bit bytes
+        matDataChar[matDataLen] = 0xFF & samples[i][j];
+        matDataLen++;
+        matDataChar[matDataLen] = samples[i][j] >> 8;
+        matDataLen++;
+      }
+      //row finished, insert new line sequence
+      matDataChar[matDataLen] = '\r';
+      matDataLen++;
+      matDataChar[matDataLen] = '\n';
+      matDataLen++;
+    }
+    //finished preparing one whole mat reading, insert additional new line
+    matDataChar[matDataLen] = '\r';
+    matDataLen++;
+    matDataChar[matDataLen] = '\n';
+    matDataLen++;
+    //send whole mat reading through USB CDC (serial)
+    CDC_Transmit_FS(matDataChar, matDataLen);
   }
+
   /* USER CODE END 3 */
 }
 
@@ -178,8 +218,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3|RCC_PERIPHCLK_CLK48;
   PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
+  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
