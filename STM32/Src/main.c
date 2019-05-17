@@ -80,12 +80,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-//2D array to store whole sensor mat reading
-uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL];
-//byte array as buffer to store data to be sent through USB CDC (serial)
-uint8_t matDataChar[2048];
-//counter for numbers of byte to be sent through USB CDC (serial)
-uint32_t matDataLen;
+
 /* USER CODE END 0 */
 
 /**
@@ -133,36 +128,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
     //some delay so as not to kill the computer with high data rate
-    HAL_Delay(1000);
-    //sample all the elements in the sensor mat, store data in a 2d array
-    matSampleAll(samples);
-    //reset transmit data buffer and char count
-    matDataLen = 0;
-    memset(matDataChar, 0, sizeof(matDataChar));
-    //write sensor data into transmit data buffer
-    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++) 
-    {
-      for (uint8_t j = 0; j < SEN_MATRIX_COL; j++)
-      {
-        //serial stream requires byte array, splitting 16-bit adc reading into 2 8-bit bytes
-        matDataChar[matDataLen] = 0xFF & samples[i][j];
-        matDataLen++;
-        matDataChar[matDataLen] = samples[i][j] >> 8;
-        matDataLen++;
-      }
-      //row finished, insert new line sequence
-      matDataChar[matDataLen] = '\r';
-      matDataLen++;
-      matDataChar[matDataLen] = '\n';
-      matDataLen++;
-    }
-    //finished preparing one whole mat reading, insert additional new line
-    matDataChar[matDataLen] = '\r';
-    matDataLen++;
-    matDataChar[matDataLen] = '\n';
-    matDataLen++;
-    //send whole mat reading through USB CDC (serial)
-    CDC_Transmit_FS(matDataChar, matDataLen);
+    HAL_Delay(50);
+    sampleAndSendData();
   }
 
   /* USER CODE END 3 */
