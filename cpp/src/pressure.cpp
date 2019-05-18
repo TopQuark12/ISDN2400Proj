@@ -28,7 +28,7 @@ int pressureGen() {
     pressureRes--;
 
     int infillLo = 10;
-    int infillHi = 50;
+    int infillHi = 25;
     int infillInc = (infillHi - infillLo) / pressureRes;
 
     ifstream presMap;
@@ -116,7 +116,7 @@ int pressureGen() {
         float higher = minPressure + (i + 1) * pressureInc;
         ostringstream cmdString;
         cmdString << "openscad -D loThrs=" << lower - pressureInc / 2 << " -D hiThrs=" << higher - pressureInc / 2
-                  << " -o output/infill_" << infillLo + i * infillInc << ".stl scad/modMeshGen.scad\n";
+                  << " -o output/infill_" << infillHi - i * infillInc << ".stl scad/modMeshGen.scad\n";
         int exitCode = system(cmdString.str().c_str());
         #ifdef DEBUG_BUILD
         cout << cmdString.str();
