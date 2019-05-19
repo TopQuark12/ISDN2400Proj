@@ -25,6 +25,8 @@ void setup() {
   serial = new Serial(this, Serial.list()[0], 115200);
   serial.bufferUntil(255);
   
+  colorMode(HSB, 255, 255, 255);
+  
 }
 
 void draw() {
@@ -37,7 +39,7 @@ void draw() {
        int LSB = rawBuf[index] < 0 ? 256 + (int)rawBuf[index] : rawBuf[index];
        int MSB = rawBuf[index + 1] < 0 ? 256 + (int)rawBuf[index + 1] : rawBuf[index + 1];
        mapData[i][j] = LSB + MSB * 200;
-       fill(map(mapData[i][j], 0, maxReading, 0, 255));
+       fill(map(mapData[i][j], 0, maxReading, 255 / 2, 0), 255, 255);
        rect(j * cellWidth, i * cellHeight, cellWidth, cellHeight);
        if (print) {
          print(mapData[i][j]);
