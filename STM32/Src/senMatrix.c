@@ -177,6 +177,29 @@ void matReset(void)
     }
 }
 
+void matResetAlt(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct;
+    for (uint8_t i = 0; i < SEN_MATRIX_COL; i++)
+    {
+        GPIO_InitStruct.Pin = sensorMat.colLine[i].pin;
+        GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        HAL_GPIO_Init(sensorMat.colLine[i].port, &GPIO_InitStruct);
+        HAL_GPIO_WritePin(sensorMat.colLine[i].port, sensorMat.colLine[i].pin, GPIO_PIN_SET);
+    }
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++)
+    {
+        GPIO_InitStruct.Pin = sensorMat.rowLine[i].pin;
+        GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        HAL_GPIO_Init(sensorMat.rowLine[i].port, &GPIO_InitStruct);
+        HAL_GPIO_WritePin(sensorMat.rowLine[i].port, sensorMat.rowLine[i].pin, GPIO_PIN_SET);
+    }
+}
+
 uint16_t matSampleSingle(uint8_t row, uint8_t col) 
 {
     HAL_GPIO_WritePin(sensorMat.colLine[col].port, sensorMat.colLine[col].pin, GPIO_PIN_RESET);
@@ -196,6 +219,23 @@ uint16_t matSampleSingle(uint8_t row, uint8_t col)
     return (uint16_t) HAL_ADC_GetValue(sensorMat.senLine[col].adc);
 }
 
+uint16_t mapSampleSingleAlt(uint8_t row, uint8_t col)
+{
+    HAL_GPIO_WritePin(sensorMat.colLine[col].port, sensorMat.colLine[col].pin, GPIO_PIN_RESET);
+
+    ADC_ChannelConfTypeDef adcConfig;
+    adcConfig.Channel = sensorMat.senLine[col].ch;
+    adcConfig.Rank = 1;
+    adcConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
+    HAL_ADC_ConfigChannel(sensorMat.senLine[col].adc, &adcConfig);
+    HAL_ADC_Start(sensorMat.senLine[col].adc);
+    HAL_ADC_PollForConversion(sensorMat.senLine[col].adc, HAL_MAX_DELAY);
+
+    HAL_GPIO_WritePin(sensorMat.colLine[col].port, sensorMat.colLine[col].pin, GPIO_PIN_SET);
+
+    return (uint16_t)HAL_ADC_GetValue(sensorMat.senLine[col].adc);
+}
+
 void matSampleAll(uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL]) 
 {
     for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++) 
@@ -207,10 +247,31 @@ void matSampleAll(uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL])
     }
 }
 
+void matSampleAllAlt(uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL]) 
+{
+    GPIO_InitTypeDef GPIOinit;
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++)
+    {
+        GPIOinit.Mode = GPIO_MODE_OUTPUT_PP;
+        GPIOinit.Pull = GPIO_NOPULL;
+        GPIOinit.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        GPIOinit.Pin = sensorMat.rowLine[i].pin;
+        HAL_GPIO_Init(sensorMat.rowLine[i].port, &GPIOinit);
+        HAL_GPIO_WritePin(sensorMat.rowLine[i].port, sensorMat.rowLine[i].pin, GPIO_PIN_SET);
+        for (uint8_t j = 0; j < SEN_MATRIX_COL; j++)
+        {
+            samples[i][j] = mapSampleSingleAlt(i, j);
+        }
+        GPIOinit.Mode = GPIO_MODE_OUTPUT_OD;
+        HAL_GPIO_Init(sensorMat.rowLine[i].port, &GPIOinit);
+        HAL_GPIO_WritePin(sensorMat.rowLine[i].port, sensorMat.rowLine[i].pin, GPIO_PIN_SET);
+    }
+}
+
 void sampleAndSendData(void)
 {
     //sample all the elements in the sensor mat, store data in a 2d array
-    matSampleAll(samples);
+    matSampleAllAlt(samples);
     //reset transmit data buffer and char count
     matDataLen = 0;
     memset(matDataChar, 0, sizeof(matDataChar));

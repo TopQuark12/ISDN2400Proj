@@ -10,7 +10,7 @@ int windowSize = 1000;
 int cellWidth = windowSize / colElements;
 int cellHeight = windowSize / rowElements;
 boolean print = true;
-int maxReading = 512;
+int maxReading = 4096;
 
 boolean packetRev = false;
 byte rawBuf[] = new byte [packetLength];
