@@ -13,6 +13,7 @@
 #include "adc.h"
 #include "senMatrix.h"
 #include "usbd_cdc_if.h"
+#include "usart.h"
 #include <string.h>
 
 senMatrix_t sensorMat;
@@ -299,4 +300,5 @@ void sampleAndSendData(void)
     matDataLen++;
     //send whole mat reading through USB CDC (serial)
     CDC_Transmit_FS(matDataChar, matDataLen);
+    HAL_UART_Transmit_DMA(&huart4, matDataChar, matDataLen);
 }
