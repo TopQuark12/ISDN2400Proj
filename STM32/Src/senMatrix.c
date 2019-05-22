@@ -20,6 +20,8 @@ senMatrix_t sensorMat;
 
 //2D array to store whole sensor mat reading
 uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL];
+uint16_t samples2[SEN_MATRIX_ROW][SEN_MATRIX_COL];
+uint16_t samples3[SEN_MATRIX_ROW][SEN_MATRIX_COL];
 //byte array as buffer to store data to be sent through USB CDC (serial)
 uint8_t matDataChar[2048];
 //counter for numbers of byte to be sent through USB CDC (serial)
@@ -186,7 +188,7 @@ void matResetAlt(void)
         GPIO_InitStruct.Pin = sensorMat.colLine[i].pin;
         GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
-        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
         HAL_GPIO_Init(sensorMat.colLine[i].port, &GPIO_InitStruct);
         HAL_GPIO_WritePin(sensorMat.colLine[i].port, sensorMat.colLine[i].pin, GPIO_PIN_SET);
     }
@@ -195,7 +197,7 @@ void matResetAlt(void)
         GPIO_InitStruct.Pin = sensorMat.rowLine[i].pin;
         GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
-        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
         HAL_GPIO_Init(sensorMat.rowLine[i].port, &GPIO_InitStruct);
         HAL_GPIO_WritePin(sensorMat.rowLine[i].port, sensorMat.rowLine[i].pin, GPIO_PIN_SET);
     }
@@ -209,7 +211,7 @@ uint16_t matSampleSingle(uint8_t row, uint8_t col)
     ADC_ChannelConfTypeDef adcConfig;
     adcConfig.Channel = sensorMat.senLine[col].ch;
     adcConfig.Rank = 1;
-    adcConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
+    adcConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
     HAL_ADC_ConfigChannel(sensorMat.senLine[col].adc, &adcConfig);
     HAL_ADC_Start(sensorMat.senLine[col].adc);
     HAL_ADC_PollForConversion(sensorMat.senLine[col].adc, HAL_MAX_DELAY);
@@ -227,7 +229,7 @@ uint16_t mapSampleSingleAlt(uint8_t row, uint8_t col)
     ADC_ChannelConfTypeDef adcConfig;
     adcConfig.Channel = sensorMat.senLine[col].ch;
     adcConfig.Rank = 1;
-    adcConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
+    adcConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
     HAL_ADC_ConfigChannel(sensorMat.senLine[col].adc, &adcConfig);
     HAL_ADC_Start(sensorMat.senLine[col].adc);
     HAL_ADC_PollForConversion(sensorMat.senLine[col].adc, HAL_MAX_DELAY);
@@ -259,8 +261,10 @@ void matSampleAllAlt(uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL])
         GPIOinit.Pin = sensorMat.rowLine[i].pin;
         HAL_GPIO_Init(sensorMat.rowLine[i].port, &GPIOinit);
         HAL_GPIO_WritePin(sensorMat.rowLine[i].port, sensorMat.rowLine[i].pin, GPIO_PIN_SET);
+        //HAL_Delay(1);
         for (uint8_t j = 0; j < SEN_MATRIX_COL; j++)
         {
+            //HAL_Delay(1);
             samples[i][j] = mapSampleSingleAlt(i, j);
         }
         GPIOinit.Mode = GPIO_MODE_OUTPUT_OD;
@@ -285,6 +289,42 @@ void sampleAndSendData(void)
             matDataChar[matDataLen] = samples[i][j] % 200;
             matDataLen++;
             matDataChar[matDataLen] = samples[i][j] / 200;
+            matDataLen++;
+        }
+        //row finished, insert new line sequence
+        matDataChar[matDataLen] = '\r';
+        matDataLen++;
+        matDataChar[matDataLen] = '\n';
+        matDataLen++;
+    }
+    //finished preparing one whole mat reading, insert additional new line
+    matDataChar[matDataLen] = '\r';
+    matDataLen++;
+    matDataChar[matDataLen] = 255;
+    matDataLen++;
+    //send whole mat reading through USB CDC (serial)
+    CDC_Transmit_FS(matDataChar, matDataLen);
+    HAL_UART_Transmit_DMA(&huart4, matDataChar, matDataLen);
+}
+
+void sampleAndSendAvgData(void)
+{
+    //sample all the elements in the sensor mat, store data in a 2d array
+    matSampleAllAlt(samples);
+    matSampleAllAlt(samples2);
+    matSampleAllAlt(samples3);
+    //reset transmit data buffer and char count
+    matDataLen = 0;
+    memset(matDataChar, 0, sizeof(matDataChar));
+    //write sensor data into transmit data buffer
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++)
+    {
+        for (uint8_t j = 0; j < SEN_MATRIX_COL; j++)
+        {
+            //serial stream requires byte array, splitting 16-bit adc reading into 2 8-bit bytes
+            matDataChar[matDataLen] = ((samples[i][j] + samples2[i][j] + samples3[i][j]) / 3) % 200;
+            matDataLen++;
+            matDataChar[matDataLen] = ((samples[i][j] + samples2[i][j] + samples3[i][j]) / 3) / 200;
             matDataLen++;
         }
         //row finished, insert new line sequence

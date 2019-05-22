@@ -131,8 +131,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
     //some delay so as not to kill the computer with high data rate
-    HAL_Delay(10git 00);
-    sampleAndSendData();
+    //HAL_Delay(100);
+    sampleAndSendAvgData();
   }
 
   /* USER CODE END 3 */

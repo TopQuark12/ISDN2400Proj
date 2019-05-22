@@ -27,3 +27,4 @@ void matReset(void);
 uint16_t matSampleSingle(uint8_t row, uint8_t col);
 void matSampleAll(uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL]);
 void sampleAndSendData(void);
+void sampleAndSendAvgData(void);
