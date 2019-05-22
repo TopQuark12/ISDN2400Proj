@@ -19,7 +19,7 @@ for (i = [0:pressureMapNumCol - 1]) {
     for (j = [0:pressureMapNumRow - 1]) {
         if((pressureMap[j][i] >= loThrs) && (pressureMap[j][i] < hiThrs))
             translate([i * spacingX, j * spacingY, 0]) {
-                cube([spacingX, spacingY, padHeight * 2], false);
+                cube([spacingX, spacingY, padHeight + 1], false);
         }        
     }
 }

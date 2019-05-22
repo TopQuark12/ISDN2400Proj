@@ -1,0 +1,344 @@
+/**
+ * @file    senMatrix.c
+ * @author	Alex Wong Tat Hang (thwongaz@connect.ust.hk)
+ * @brief   driver functions for reading from the sensor matrix mat
+ * @version 0.1
+ * @date	2019-5-12
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
+#include "main.h"
+#include "adc.h"
+#include "senMatrix.h"
+#include "usbd_cdc_if.h"
+#include "usart.h"
+#include <string.h>
+
+senMatrix_t sensorMat;
+
+//2D array to store whole sensor mat reading
+uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL];
+uint16_t samples2[SEN_MATRIX_ROW][SEN_MATRIX_COL];
+uint16_t samples3[SEN_MATRIX_ROW][SEN_MATRIX_COL];
+//byte array as buffer to store data to be sent through USB CDC (serial)
+uint8_t matDataChar[2048];
+//counter for numbers of byte to be sent through USB CDC (serial)
+uint32_t matDataLen;
+
+void matInit(void)
+{
+    sensorMat.colLine[0].pin = C0_Pin;
+    sensorMat.colLine[1].pin = C1_Pin;
+    sensorMat.colLine[2].pin = C2_Pin;
+    sensorMat.colLine[3].pin = C3_Pin;
+    sensorMat.colLine[4].pin = C4_Pin;
+    sensorMat.colLine[5].pin = C5_Pin;
+    sensorMat.colLine[6].pin = C6_Pin;
+    sensorMat.colLine[7].pin = C7_Pin;
+    sensorMat.colLine[8].pin = C8_Pin;
+    sensorMat.colLine[9].pin = C9_Pin;
+    sensorMat.colLine[10].pin = C10_Pin;
+    sensorMat.colLine[11].pin = C11_Pin;
+    sensorMat.colLine[12].pin = C12_Pin;
+    sensorMat.colLine[13].pin = C13_Pin;
+    sensorMat.colLine[14].pin = C14_Pin;
+    sensorMat.colLine[15].pin = C15_Pin;
+    sensorMat.colLine[16].pin = C16_Pin;
+    sensorMat.colLine[17].pin = C17_Pin;
+    sensorMat.colLine[18].pin = C18_Pin;
+    sensorMat.colLine[19].pin = C19_Pin;
+
+    sensorMat.colLine[0].port = C0_GPIO_Port;
+    sensorMat.colLine[1].port = C1_GPIO_Port;
+    sensorMat.colLine[2].port = C2_GPIO_Port;
+    sensorMat.colLine[3].port = C3_GPIO_Port;
+    sensorMat.colLine[4].port = C4_GPIO_Port;
+    sensorMat.colLine[5].port = C5_GPIO_Port;
+    sensorMat.colLine[6].port = C6_GPIO_Port;
+    sensorMat.colLine[7].port = C7_GPIO_Port;
+    sensorMat.colLine[8].port = C8_GPIO_Port;
+    sensorMat.colLine[9].port = C9_GPIO_Port;
+    sensorMat.colLine[10].port = C10_GPIO_Port;
+    sensorMat.colLine[11].port = C11_GPIO_Port;
+    sensorMat.colLine[12].port = C12_GPIO_Port;
+    sensorMat.colLine[13].port = C13_GPIO_Port;
+    sensorMat.colLine[14].port = C14_GPIO_Port;
+    sensorMat.colLine[15].port = C15_GPIO_Port;
+    sensorMat.colLine[16].port = C16_GPIO_Port;
+    sensorMat.colLine[17].port = C17_GPIO_Port;
+    sensorMat.colLine[18].port = C18_GPIO_Port;
+    sensorMat.colLine[19].port = C19_GPIO_Port;
+
+    sensorMat.rowLine[0].pin = R0_Pin;
+    sensorMat.rowLine[1].pin = R1_Pin;
+    sensorMat.rowLine[2].pin = R2_Pin;
+    sensorMat.rowLine[3].pin = R3_Pin;
+    sensorMat.rowLine[4].pin = R4_Pin;
+    sensorMat.rowLine[5].pin = R5_Pin;
+    sensorMat.rowLine[6].pin = R6_Pin;
+    sensorMat.rowLine[7].pin = R7_Pin;
+    sensorMat.rowLine[8].pin = R8_Pin;
+    sensorMat.rowLine[9].pin = R9_Pin;
+    sensorMat.rowLine[10].pin = R10_Pin;
+    sensorMat.rowLine[11].pin = R11_Pin;
+    sensorMat.rowLine[12].pin = R12_Pin;
+    sensorMat.rowLine[13].pin = R13_Pin;
+    sensorMat.rowLine[14].pin = R14_Pin;
+    sensorMat.rowLine[15].pin = R15_Pin;
+    sensorMat.rowLine[16].pin = R16_Pin;
+    sensorMat.rowLine[17].pin = R17_Pin;
+    sensorMat.rowLine[18].pin = R18_Pin;
+    sensorMat.rowLine[19].pin = R19_Pin;
+
+    sensorMat.rowLine[0].port = R0_GPIO_Port;
+    sensorMat.rowLine[1].port = R1_GPIO_Port;
+    sensorMat.rowLine[2].port = R2_GPIO_Port;
+    sensorMat.rowLine[3].port = R3_GPIO_Port;
+    sensorMat.rowLine[4].port = R4_GPIO_Port;
+    sensorMat.rowLine[5].port = R5_GPIO_Port;
+    sensorMat.rowLine[6].port = R6_GPIO_Port;
+    sensorMat.rowLine[7].port = R7_GPIO_Port;
+    sensorMat.rowLine[8].port = R8_GPIO_Port;
+    sensorMat.rowLine[9].port = R9_GPIO_Port;
+    sensorMat.rowLine[10].port = R10_GPIO_Port;
+    sensorMat.rowLine[11].port = R11_GPIO_Port;
+    sensorMat.rowLine[12].port = R12_GPIO_Port;
+    sensorMat.rowLine[13].port = R13_GPIO_Port;
+    sensorMat.rowLine[14].port = R14_GPIO_Port;
+    sensorMat.rowLine[15].port = R15_GPIO_Port;
+    sensorMat.rowLine[16].port = R16_GPIO_Port;
+    sensorMat.rowLine[17].port = R17_GPIO_Port;
+    sensorMat.rowLine[18].port = R18_GPIO_Port;
+    sensorMat.rowLine[19].port = R19_GPIO_Port;
+
+    sensorMat.senLine[0].adc = &hadc3;
+    sensorMat.senLine[1].adc = &hadc3;
+    sensorMat.senLine[2].adc = &hadc3;
+    sensorMat.senLine[3].adc = &hadc3;
+    sensorMat.senLine[4].adc = &hadc3;
+    sensorMat.senLine[5].adc = &hadc3;
+    sensorMat.senLine[6].adc = &hadc3;
+    sensorMat.senLine[7].adc = &hadc3;
+    sensorMat.senLine[8].adc = &hadc1;
+    sensorMat.senLine[9].adc = &hadc1;
+    sensorMat.senLine[10].adc = &hadc1;
+    sensorMat.senLine[11].adc = &hadc1;
+    sensorMat.senLine[12].adc = &hadc3;
+    sensorMat.senLine[13].adc = &hadc3;
+    sensorMat.senLine[14].adc = &hadc1;
+    sensorMat.senLine[15].adc = &hadc1;
+    sensorMat.senLine[16].adc = &hadc1;
+    sensorMat.senLine[17].adc = &hadc1;
+    sensorMat.senLine[18].adc = &hadc1;
+    sensorMat.senLine[19].adc = &hadc1;
+
+    sensorMat.senLine[0].ch = ADC_CHANNEL_9;
+    sensorMat.senLine[1].ch = ADC_CHANNEL_14;
+    sensorMat.senLine[2].ch = ADC_CHANNEL_15;
+    sensorMat.senLine[3].ch = ADC_CHANNEL_4;
+    sensorMat.senLine[4].ch = ADC_CHANNEL_5;
+    sensorMat.senLine[5].ch = ADC_CHANNEL_6;
+    sensorMat.senLine[6].ch = ADC_CHANNEL_7;
+    sensorMat.senLine[7].ch = ADC_CHANNEL_8;
+    sensorMat.senLine[8].ch = ADC_CHANNEL_10;
+    sensorMat.senLine[9].ch = ADC_CHANNEL_12;
+    sensorMat.senLine[10].ch = ADC_CHANNEL_13;
+    sensorMat.senLine[11].ch = ADC_CHANNEL_0;
+    sensorMat.senLine[12].ch = ADC_CHANNEL_1;
+    sensorMat.senLine[13].ch = ADC_CHANNEL_2;
+    sensorMat.senLine[14].ch = ADC_CHANNEL_3;
+    sensorMat.senLine[15].ch = ADC_CHANNEL_4;
+    sensorMat.senLine[16].ch = ADC_CHANNEL_5;
+    sensorMat.senLine[17].ch = ADC_CHANNEL_6;
+    sensorMat.senLine[18].ch = ADC_CHANNEL_8;
+    sensorMat.senLine[19].ch = ADC_CHANNEL_9;
+
+    matReset();
+
+}
+
+void matReset(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct;
+    for (uint8_t i = 0; i < SEN_MATRIX_COL; i++) 
+    {
+        GPIO_InitStruct.Pin = sensorMat.colLine[i].pin;
+        GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        HAL_GPIO_Init(sensorMat.colLine[i].port, &GPIO_InitStruct);
+        HAL_GPIO_WritePin(sensorMat.colLine[i].port, sensorMat.colLine[i].pin, GPIO_PIN_SET);
+    }
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++)
+    {
+        HAL_GPIO_WritePin(sensorMat.rowLine[i].port, sensorMat.rowLine[i].pin, GPIO_PIN_RESET);
+        GPIO_InitStruct.Pin = sensorMat.rowLine[i].pin;
+        GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        HAL_GPIO_Init(sensorMat.rowLine[i].port, &GPIO_InitStruct);
+    }
+}
+
+void matResetAlt(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct;
+    for (uint8_t i = 0; i < SEN_MATRIX_COL; i++)
+    {
+        GPIO_InitStruct.Pin = sensorMat.colLine[i].pin;
+        GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
+        HAL_GPIO_Init(sensorMat.colLine[i].port, &GPIO_InitStruct);
+        HAL_GPIO_WritePin(sensorMat.colLine[i].port, sensorMat.colLine[i].pin, GPIO_PIN_SET);
+    }
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++)
+    {
+        GPIO_InitStruct.Pin = sensorMat.rowLine[i].pin;
+        GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
+        HAL_GPIO_Init(sensorMat.rowLine[i].port, &GPIO_InitStruct);
+        HAL_GPIO_WritePin(sensorMat.rowLine[i].port, sensorMat.rowLine[i].pin, GPIO_PIN_SET);
+    }
+}
+
+uint16_t matSampleSingle(uint8_t row, uint8_t col) 
+{
+    HAL_GPIO_WritePin(sensorMat.colLine[col].port, sensorMat.colLine[col].pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(sensorMat.rowLine[row].port, sensorMat.rowLine[row].pin, GPIO_PIN_SET);
+
+    ADC_ChannelConfTypeDef adcConfig;
+    adcConfig.Channel = sensorMat.senLine[col].ch;
+    adcConfig.Rank = 1;
+    adcConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
+    HAL_ADC_ConfigChannel(sensorMat.senLine[col].adc, &adcConfig);
+    HAL_ADC_Start(sensorMat.senLine[col].adc);
+    HAL_ADC_PollForConversion(sensorMat.senLine[col].adc, HAL_MAX_DELAY);
+
+    HAL_GPIO_WritePin(sensorMat.colLine[col].port, sensorMat.colLine[col].pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(sensorMat.rowLine[row].port, sensorMat.rowLine[row].pin, GPIO_PIN_RESET);
+
+    return (uint16_t) HAL_ADC_GetValue(sensorMat.senLine[col].adc);
+}
+
+uint16_t mapSampleSingleAlt(uint8_t row, uint8_t col)
+{
+    HAL_GPIO_WritePin(sensorMat.colLine[col].port, sensorMat.colLine[col].pin, GPIO_PIN_RESET);
+
+    ADC_ChannelConfTypeDef adcConfig;
+    adcConfig.Channel = sensorMat.senLine[col].ch;
+    adcConfig.Rank = 1;
+    adcConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
+    HAL_ADC_ConfigChannel(sensorMat.senLine[col].adc, &adcConfig);
+    HAL_ADC_Start(sensorMat.senLine[col].adc);
+    HAL_ADC_PollForConversion(sensorMat.senLine[col].adc, HAL_MAX_DELAY);
+
+    HAL_GPIO_WritePin(sensorMat.colLine[col].port, sensorMat.colLine[col].pin, GPIO_PIN_SET);
+
+    return (uint16_t)HAL_ADC_GetValue(sensorMat.senLine[col].adc);
+}
+
+void matSampleAll(uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL]) 
+{
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++) 
+    {
+        for (uint8_t j = 0; j < SEN_MATRIX_COL; j++)
+        {
+            samples[i][j] = matSampleSingle(i, j);
+        }
+    }
+}
+
+void matSampleAllAlt(uint16_t samples[SEN_MATRIX_ROW][SEN_MATRIX_COL]) 
+{
+    GPIO_InitTypeDef GPIOinit;
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++)
+    {
+        GPIOinit.Mode = GPIO_MODE_OUTPUT_PP;
+        GPIOinit.Pull = GPIO_NOPULL;
+        GPIOinit.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        GPIOinit.Pin = sensorMat.rowLine[i].pin;
+        HAL_GPIO_Init(sensorMat.rowLine[i].port, &GPIOinit);
+        HAL_GPIO_WritePin(sensorMat.rowLine[i].port, sensorMat.rowLine[i].pin, GPIO_PIN_SET);
+        //HAL_Delay(1);
+        for (uint8_t j = 0; j < SEN_MATRIX_COL; j++)
+        {
+            //HAL_Delay(1);
+            samples[i][j] = mapSampleSingleAlt(i, j);
+        }
+        GPIOinit.Mode = GPIO_MODE_OUTPUT_OD;
+        HAL_GPIO_Init(sensorMat.rowLine[i].port, &GPIOinit);
+        HAL_GPIO_WritePin(sensorMat.rowLine[i].port, sensorMat.rowLine[i].pin, GPIO_PIN_SET);
+    }
+}
+
+void sampleAndSendData(void)
+{
+    //sample all the elements in the sensor mat, store data in a 2d array
+    matSampleAllAlt(samples);
+    //reset transmit data buffer and char count
+    matDataLen = 0;
+    memset(matDataChar, 0, sizeof(matDataChar));
+    //write sensor data into transmit data buffer
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++)
+    {
+        for (uint8_t j = 0; j < SEN_MATRIX_COL; j++)
+        {
+            //serial stream requires byte array, splitting 16-bit adc reading into 2 8-bit bytes
+            matDataChar[matDataLen] = samples[i][j] % 200;
+            matDataLen++;
+            matDataChar[matDataLen] = samples[i][j] / 200;
+            matDataLen++;
+        }
+        //row finished, insert new line sequence
+        matDataChar[matDataLen] = '\r';
+        matDataLen++;
+        matDataChar[matDataLen] = '\n';
+        matDataLen++;
+    }
+    //finished preparing one whole mat reading, insert additional new line
+    matDataChar[matDataLen] = '\r';
+    matDataLen++;
+    matDataChar[matDataLen] = 255;
+    matDataLen++;
+    //send whole mat reading through USB CDC (serial)
+    CDC_Transmit_FS(matDataChar, matDataLen);
+    HAL_UART_Transmit_DMA(&huart4, matDataChar, matDataLen);
+}
+
+void sampleAndSendAvgData(void)
+{
+    //sample all the elements in the sensor mat, store data in a 2d array
+    matSampleAllAlt(samples);
+    matSampleAllAlt(samples2);
+    matSampleAllAlt(samples3);
+    //reset transmit data buffer and char count
+    matDataLen = 0;
+    memset(matDataChar, 0, sizeof(matDataChar));
+    //write sensor data into transmit data buffer
+    for (uint8_t i = 0; i < SEN_MATRIX_ROW; i++)
+    {
+        for (uint8_t j = 0; j < SEN_MATRIX_COL; j++)
+        {
+            //serial stream requires byte array, splitting 16-bit adc reading into 2 8-bit bytes
+            matDataChar[matDataLen] = ((samples[i][j] + samples2[i][j] + samples3[i][j]) / 3) % 200;
+            matDataLen++;
+            matDataChar[matDataLen] = ((samples[i][j] + samples2[i][j] + samples3[i][j]) / 3) / 200;
+            matDataLen++;
+        }
+        //row finished, insert new line sequence
+        matDataChar[matDataLen] = '\r';
+        matDataLen++;
+        matDataChar[matDataLen] = '\n';
+        matDataLen++;
+    }
+    //finished preparing one whole mat reading, insert additional new line
+    matDataChar[matDataLen] = '\r';
+    matDataLen++;
+    matDataChar[matDataLen] = 255;
+    matDataLen++;
+    //send whole mat reading through USB CDC (serial)
+    CDC_Transmit_FS(matDataChar, matDataLen);
+    HAL_UART_Transmit_DMA(&huart4, matDataChar, matDataLen);
+}
