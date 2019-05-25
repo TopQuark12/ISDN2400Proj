@@ -17,8 +17,9 @@ using namespace std;
 
 int main()
 {
+    system("rm ./output/*");
     float length, width, height;
-    cout << "Welcone to the cusion generation software\n\n";
+    cout << "\nWelcone to the cushion generation software\n\n";
     cout << "Enter the length of the seating pad (mm): ";
     cin >> length;
     cout << "Enter the width of the seating pad  (mm): ";
@@ -41,5 +42,6 @@ int main()
         return pressureGenErrorCode;
 
     system("openscad -o output/main.stl scad/mainBody.scad");
+    cout << "Main Body Mesh Generation Successful";
     return 0;
 }
